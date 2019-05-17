@@ -1,0 +1,136 @@
+My SQL Questions
+
+
+4.1.1 Get people who have visited a particular country
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Procedure:
+
+PROCEDURE `get_ppl_visited_country`(n varchar(50))
+BEGIN
+	select 	p.personID as "Person ID",
+			p.personname as "Person Name",
+			c.name as "City Name",
+			h.dateArrived as "Date Arrived",
+			y.Name as "Country Name"
+	from 	country y
+	join 	city c
+	on 		c.CountryCode = y.Code
+	join 	hasvisitedcity h
+	on 		h.cityID = c.ID
+	join 	person p
+	on 		p.personID = h.personID
+	where y.Name LIKE CONCAT('%',n,'%')
+	Order by p.personID;
+End
+_________________________________________________________________________
+
+Example of call:
+
+call get_ppl_visited_country('land')
+
+=========================================================================
+
+4.1.2 Rename Continent
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Function:
+
+CREATE DEFINER=`root`@`localhost` FUNCTION `ren_continent`(ct varchar(30)) RETURNS varchar(30) CHARSET utf8mb4
+    DETERMINISTIC
+BEGIN
+	if ct = "North America" or ct = "South America" then
+		return "Americas";
+	elseif ct = "Oceania" then
+		return "Australia";
+	elseif ct = "Antartica" then
+		return "South Pole";
+	else
+		return ct;
+	end if;
+END
+_________________________________________________________________________
+
+Example of Function usage:
+
+select 	Name,
+		Continent,
+		ren_continent(Continent) as "New Continent"
+from 	country;
+
+=========================================================================
+
+4.1.3 Country with biggest population per continent
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Command:
+
+select	c.continent as "Continent",
+		c.name as "Country Name",
+        c.population as "Population"
+from 	(
+		select 	continent, 
+				max(population) as Max_Pop
+		from 	country
+		group by continent
+		)	as m
+inner join 	country as c
+on		c.continent = m.continent and c.population = m.Max_Pop
+where 	c.population > 0
+Order by c.continent DESC;
+
+=========================================================================
+
+4.1.4 Minimum city population of youngest person(s)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Command:
+
+select	c.name
+from 	person as p
+join 	hasvisitedcity as h on p.personid = h.personid
+join 	city as c on c.id = h.cityID
+order by p.age asc, c.population asc
+Limit 	1;
+
+Note:
+This only solves the specific example in the current DB, where 2 people are the same age (22), but only 1 has visited anywhere.
+
+=========================================================================
+
+4.1.5 Update City Populations 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Command:
+
+UPDATE City
+SET Population = CASE
+	When District = "Eastern Cape" then Population +1000
+    When District = "Free State" then Population +2000
+    When District = "Western Cape" then Population -10000
+    Else Population
+END
+Where District = "Eastern Cape" or District = "Free State" or District = "Western Cape";
+
+Note: There is a need to toggle off the "Safe Updates" box in the Preferences -> SQL Editor tab, and then reconnect to server, or else this command will fail.
+
+=========================================================================
+
+4.1.6 Country Independence 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Query:
+
+Select c.name,
+		c.IndepYear,
+        concat( 
+			(case -- Check for population over 100,000,000
+				When c.population > 100000000 then "Large " else "" end),
+			(case -- Check age of country
+				When YEAR(now()) - c.IndepYear < 10 then "New "
+				When YEAR(now()) - c.IndepYear < 50 then "Modern "
+				When YEAR(now()) - c.IndepYear < 100 then "Old " 
+                Else "Early " end),
+        c.GovernmentForm
+      ) as "Desc"
+From country as c;

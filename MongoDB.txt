@@ -1,0 +1,28 @@
+MongoDB Questions
+
+4.3.1 Average Engine Size
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Command:
+
+db.project.aggregate([{$group : {_id: null, Average: {$avg: "$car.engineSize"}}}])
+
+=========================================================================
+
+4.3.2 Categorise County Populations
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Command:
+
+db.project.aggregate( [	{ $project: { name: 1, size: { $switch: { branches: [ { case: { $lt : [ "$pop", 50000 ] }, then: "0" }, { case: { $and : [ { $gte : [ "$pop", 50000 ] }, { $lt : [ "$pop", 100000 ] } ] }, then: "50000" }, { case: { $and : [ { $gte : [ "$pop", 100000 ] }, { $lt : [ "$pop", 150000 ] } ] }, then : "100000" }, { case: { $gte : [ "$pop", 150000 ] }, then: "Other" } ] } } } }, { $group: { _id: "$size", counties: {$push: "$name" } } } ] )
+
+=========================================================================
+
+4.3.3 Redefine County Populations 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Command:
+
+db.project.bulkWrite( [ { updateMany : 	{ "filter" : { "pop" : { $lt : 100000} } , "update" : { "$set" : { "pop" : "Small county"} } } }, { updateMany : { "filter" : { "pop" : { $gte : 100000} } , "update" : { "$set" : { "pop" : "Large county"} } } } ] )
+
+=========================================================================
