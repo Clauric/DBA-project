@@ -5,7 +5,16 @@ MongoDB Questions
 
 Command:
 
-db.project.aggregate([{$group : {_id: null, Average: {$avg: "$car.engineSize"}}}])
+db.project.aggregate([
+	{
+		$group: {
+			_id: null, 
+			Average: {
+				$avg: "$car.engineSize"
+			}
+		}
+	}
+])
 
 =========================================================================
 
@@ -14,7 +23,56 @@ db.project.aggregate([{$group : {_id: null, Average: {$avg: "$car.engineSize"}}}
 
 Command:
 
-db.project.aggregate( [	{ $project: { name: 1, size: { $switch: { branches: [ { case: { $lt : [ "$pop", 50000 ] }, then: "0" }, { case: { $and : [ { $gte : [ "$pop", 50000 ] }, { $lt : [ "$pop", 100000 ] } ] }, then: "50000" }, { case: { $and : [ { $gte : [ "$pop", 100000 ] }, { $lt : [ "$pop", 150000 ] } ] }, then : "100000" }, { case: { $gte : [ "$pop", 150000 ] }, then: "Other" } ] } } } }, { $group: { _id: "$size", counties: {$push: "$name" } } } ] )
+db.project.aggregate([
+	{ 
+		$project: {
+			name: 1, 
+			size: { 
+				$switch: {
+					branches: [{ 
+						case: {
+							$lt: [
+								"$pop", 50000
+							]
+						}, then: "0"
+					}, 
+					{
+						case: {
+							$and: [{ 
+								$gte: ["$pop", 50000]
+							}, { 
+								$lt: ["$pop", 100000]
+								}
+							]
+						}, then: "50000"
+					},
+					{ 
+						case: {
+							$and: [{
+								$gte: ["$pop", 100000]
+							}, {
+								$lt: ["$pop", 150000]
+								}
+							]
+						}, then: "100000"
+					}, 
+					{ 
+						case: {
+							$gte: ["$pop", 150000]
+						}, then: "Other"
+					}]
+				}
+			}
+		}
+	}, { 
+		$group: { 
+			_id: "$size", 
+			counties: {
+				$push: "$name"
+			}
+		}
+	}
+])
 
 =========================================================================
 
@@ -23,6 +81,27 @@ db.project.aggregate( [	{ $project: { name: 1, size: { $switch: { branches: [ { 
 
 Command:
 
-db.project.bulkWrite( [ { updateMany : 	{ "filter" : { "pop" : { $lt : 100000} } , "update" : { "$set" : { "pop" : "Small county"} } } }, { updateMany : { "filter" : { "pop" : { $gte : 100000} } , "update" : { "$set" : { "pop" : "Large county"} } } } ] )
+db.project.bulkWrite([
+	{
+		updateMany: { 
+			"filter": {
+				"pop": {$lt: 100000}
+			}, 
+			"update": { 
+				"$set": {"pop": "Small county"} 
+			}
+		}
+	}, 
+	{
+		updateMany: {
+			"filter": {
+				"pop": {$gte: 100000}
+			}, 
+			"update": {
+				"$set": {"pop": "Large county"}
+			}
+		}
+	}
+])
 
 =========================================================================
